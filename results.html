@@ -12,7 +12,7 @@
             --card-background: rgba(255, 255, 255, 0.9);
             --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
         }
-        body{font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;margin:0;background:linear-gradient(to bottom, var(--light-green), var(--dark-green));min-height:100vh;color:#333}header{padding:20px;background:rgba(0,0,0,0.1);text-align:center}header h1{color:white;text-shadow:1px 1px 2px rgba(0,0,0,0.3);margin:0}header a{color:white;text-decoration:none;font-weight:bold;display:inline-block;margin-top:10px;padding:8px 15px;border:1px solid white;border-radius:20px;transition:background 0.3s, color 0.3s}header a:hover{background:white;color:var(--dark-green)}#results-gallery{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:20px;padding:20px}.gallery-item{background:var(--card-background);border-radius:15px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:transform 0.3s ease, box-shadow 0.3s ease;opacity:0;animation:fadeIn 0.5s ease forwards}.gallery-item:hover{transform:translateY(-5px);box-shadow:0 12px 40px 0 rgba(31, 38, 135, 0.3)}@keyframes fadeIn{to{opacity:1}}.gallery-item img{width:100%;height:150px;object-fit:contain;background-color:white;display:block}.gallery-item-details{padding:15px;text-align:center}.gallery-item-details p{margin:0;line-height:1.3}
+        body{font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;margin:0;background:linear-gradient(to bottom, var(--light-green), var(--dark-green));min-height:100vh;color:#333}header{padding:20px;background:rgba(0,0,0,0.1);text-align:center}header h1{color:white;text-shadow:1px 1px 2px rgba(0,0,0,0.3);margin:0}header a{color:white;text-decoration:none;font-weight:bold;display:inline-block;margin-top:10px;padding:8px 15px;border:1px solid white;border-radius:20px;transition:background 0.3s, color 0.3s}header a:hover{background:white;color:var(--dark-green)}#results-gallery{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:20px;padding:20px}.gallery-item{background:var(--card-background);border-radius:15px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:transform 0.3s ease, box-shadow 0.3s ease;opacity:0;animation:fadeIn 0.5s ease forwards; width: 180px; flex-shrink: 0;}.gallery-item:hover{transform:translateY(-5px);box-shadow:0 12px 40px 0 rgba(31, 38, 135, 0.3)}@keyframes fadeIn{to{opacity:1}}.gallery-item img{width:100%;height:150px;object-fit:contain;background-color:white;display:block}.gallery-item-details{padding:15px;text-align:center}.gallery-item-details p{margin:0;line-height:1.3}
         .item-name {
             font-weight: 600;
             font-size: 1em;
@@ -50,20 +50,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loader = document.getElementById('loader');
     const modalOverlay = document.getElementById('modal-overlay');
     const modalImage = document.getElementById('modal-image');
-    const stores = ["foodbasics", "nofrills", "freshco", "metro", "foodland", "gianttiger", "walmart", "loblaws"];
     let allStoreData = [];
     const params = new URLSearchParams(window.location.search);
     const query = params.get('q');
     const searchTerms = query ? query.split(',') : [];
+
+    const storesParam = params.get('stores');
+    const storesToSearch = storesParam ? storesParam.split(',') : ["foodbasics", "nofrills", "freshco", "metro", "foodland", "gianttiger", "walmart", "loblaws"];
 
     if (searchTerms.length === 0) {
         loader.textContent = "No items to search. Please start a new search.";
         return;
     }
 
-    async function loadGroceryData() {
+    async function loadGroceryData(stores) {
         try {
-            const fetchPromises = stores.map(store => fetch(`${basePath}data/${store}.json`).then(res => res.json()));
+            const fetchPromises = stores.map(store => 
+                fetch(`${basePath}data/${store}.json`).then(res => res.json())
+            );
             const allData = await Promise.all(fetchPromises);
             allStoreData = [].concat(...allData);
         } catch (error) {
@@ -72,14 +76,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Group results by search term
     function findItemsByTerm(terms) {
         return terms.map(term => {
             const searchTerm = term.toLowerCase().trim();
             const foundItems = allStoreData.filter(item =>
                 item.name && item.name.toLowerCase().includes(searchTerm)
             );
-            // Remove duplicates per term
             const uniqueItems = foundItems.filter((item, idx, arr) =>
                 idx === arr.findIndex(t => t.id === item.id)
             );
@@ -87,24 +89,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Render grouped results
     function displayGalleryByTerm(groups) {
         loader.style.display = 'none';
-        gallery.innerHTML = ''; // Clear previous
+        gallery.innerHTML = ''; 
 
         let resultsFound = false;
 
         groups.forEach(group => {
-            // Section header
             const section = document.createElement('section');
             section.className = 'results-section';
+            section.style.gridColumn = '1 / -1'; 
+
             const header = document.createElement('h2');
             header.textContent = `Results for: ${group.term}`;
             header.style.color = "var(--dark-green)";
             header.style.margin = "1em 0 0.5em 0";
+            header.style.textShadow = "1px 1px 2px rgba(255,255,255,0.5)";
             section.appendChild(header);
 
-            // Results grid
             if (group.items.length === 0) {
                 const p = document.createElement('p');
                 p.textContent = 'No results found.';
@@ -116,6 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 grid.className = 'gallery-row';
                 grid.style.display = 'flex';
                 grid.style.flexWrap = 'wrap';
+                grid.style.gap = '20px'; 
                 group.items.forEach((item, index) => {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'gallery-item';
@@ -141,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (!resultsFound) {
-            gallery.innerHTML = '<p style="color:white; text-align:center; width:100%;">No results found.</p>';
+            gallery.innerHTML = '<p style="color:white; text-align:center; width:100%;">No results found for the selected stores.</p>';
         }
     }
 
@@ -158,18 +161,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         transition.finished.finally(() => imgElement.classList.remove('selected'));
     }
+
     function closeModal() {
         if (!document.startViewTransition) {
             modalOverlay.classList.remove('active');
             return;
         }
-        const transition = document.startViewTransition(() => {
+        document.startViewTransition(() => {
             modalOverlay.classList.remove('active');
         });
     }
     modalOverlay.addEventListener('click', closeModal);
 
-    await loadGroceryData();
+    await loadGroceryData(storesToSearch);
     const resultsByTerm = findItemsByTerm(searchTerms);
     displayGalleryByTerm(resultsByTerm);
 });
