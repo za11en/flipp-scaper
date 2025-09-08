@@ -11,7 +11,7 @@ stores = {
     "foodland": "https://dam.flippenterprise.net/api/flipp/flyers/7471042/flyer_items?locale=en",
     "gianttiger": "https://dam.flippenterprise.net/api/flipp/flyers/7465213/flyer_items?locale=en",
     "walmart": "https://dam.flippenterprise.net/api/flipp/flyers/7469517/flyer_items?locale=en",
-    "loblaws": "https://dam.flippenterprise.net/api/flipp/flyers/7477242/flyer_pages?locale=en"
+    "loblaws": "https://dam.flippenterprise.net/api/flipp/flyers/7477242/flyer_items?locale=en"
 }
 
 if not os.path.exists('data'):
