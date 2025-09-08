@@ -9,7 +9,9 @@ stores = {
     "freshco": "https://dam.flippenterprise.net/api/flipp/flyers/7456719/flyer_items?locale=en",
     "metro": "https://dam.flippenterprise.net/api/flipp/flyers/7471710/flyer_items?locale=en",
     "foodland": "https://dam.flippenterprise.net/api/flipp/flyers/7471042/flyer_items?locale=en",
-    "gianttiger": "https://dam.flippenterprise.net/api/flipp/flyers/7465213/flyer_items?locale=en"
+    "gianttiger": "https://dam.flippenterprise.net/api/flipp/flyers/7465213/flyer_items?locale=en",
+    "walmart": "https://dam.flippenterprise.net/api/flipp/flyers/7469517/flyer_items?locale=en",
+    "loblaws": "https://dam.flippenterprise.net/api/flipp/flyers/7477242/flyer_pages?locale=en"
 }
 
 if not os.path.exists('data'):
