@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Grocery List Optimizer</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden; 
+            overflow-y: auto; /* Allow scrolling for results */
+            background: linear-gradient(to bottom, #90ee90, #006400);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .animation-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .grocery-item {
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            will-change: transform, opacity;
+            cursor: pointer; /* Add pointer to show it's clickable */
+        }
+
+        @keyframes fallAndFade {
+            0% {
+                transform: translateY(var(--start-y));
+                opacity: 0;
+            }
+            20% {
+                opacity: var(--final-opacity);
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px));
+                opacity: var(--final-opacity);
+            }
+        }
+
+        .floating-container {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -20%);
+            width: 90%;
+            max-width: 500px;
+            background-color: rgba(255, 255, 255, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .container-text {
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .added-items-container {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-height: 150px; 
+            overflow-y: auto;
+            padding-top: 15px; 
+	        padding-bottom: 15px;
+        }
+
+        .added-item-bubble {
+            background-color: rgba(100, 100, 255, 1);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: popIn 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            margin-top: 5px; 
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: -10px;
+            right: -5px;
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.5);
+            transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+        }
+
+        .added-item-bubble:hover .remove-btn,
+        .added-item-bubble.selected .remove-btn {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+        
+        .finalize-button {
+            background-color: #FF9200;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .finalize-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.5); }
+        }
+
+        /* --- NEW CSS FOR RESULTS --- */
+        #results-container {
+            margin-top: 50vh; /* Start results below the main container */
+            padding: 20px;
+            padding-top: 200px;
+        }
+        .result-group {
+            background: rgba(255, 255, 255, 0.8);
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .result-group h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .result-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-right: 15px;
+            background: white;
+        }
+        .item-details {
+            flex-grow: 1;
+        }
+        .item-details p {
+            margin: 0;
+            line-height: 1.4;
+        }
+        .item-name {
+            font-weight: bold;
+        }
+        .item-price {
+            font-size: 1.2em;
+            color: #006400;
+            font-weight: bold;
+        }
+        .item-store {
+            text-transform: capitalize;
+            color: #555;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="animation-container" class="animation-container"></div>
+    <div class="floating-container">
+        <div class="container-text">
+            <h2>Build Your Smart Shopping List</h2>
+            <p>Enter your grocery items below or click on the falling items to add them to your list.</p>
+        </div>
+        <div class="search-container">
+            <input type="search" id="grocery-input" class="search-input" placeholder="e.g., Apples, Milk, Bread...">
+        </div>
+        <div id="added-items" class="added-items-container"></div>
+        <button id="finalize-btn" class="finalize-button">Optimize My List</button>
+    </div>
+
+    <!-- This is where the search results will be displayed -->
+    <div id="results-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- ANIMATION LOGIC ---
+            const groceryList = [
+                'Apples', 'Avocado', 'Bananas', 'Blueberries', 'Oranges', 'Strawberries', 'Grapes', 'Watermelon', 'Peaches', 'Cherries',
+                'Broccoli', 'Carrots', 'Cucumber', 'Garlic', 'Onions', 'Peppers', 'Potatoes', 'Spinach', 'Tomatoes', 'Lettuce',
+                'Mushrooms', 'Celery', 'Sweet Potatoes', 'Corn', 'Zucchini', 'Asparagus', 'Cabbage', 'Cauliflower', 'Eggplant', 'Kale',
+                'Beef', 'Chicken', 'Bacon', 'Fish', 'Sausage', 'Pork', 'Turkey', 'Shrimp', 'Lamb', 'Crab',
+                'Milk', 'Cheese', 'Eggs', 'Butter', 'Yogurt', 'Cream Cheese', 'Sour Cream', 'Cottage Cheese', 'Heavy Cream', 'Half & Half',
+                'Bread', 'Rice', 'Pasta', 'Cereal', 'Oats', 'Flour', 'Bagels', 'Tortillas', 'Quinoa', 'Pita Bread',
+                'Beans', 'Lentils', 'Nuts', 'Peanut Butter', 'Almonds', 'Walnuts', 'Cashews', 'Hummus', 'Tofu', 'Edamame',
+                'Soup', 'Crackers', 'Chips', 'Popcorn', 'Honey', 'Sugar', 'Jam', 'Pretzels', 'Granola Bars', 'Chocolate',
+                'Olive Oil', 'Ketchup', 'Mustard', 'Mayonnaise', 'Salsa', 'Soy Sauce', 'Vinegar', 'Hot Sauce', 'Spices', 'Herbs',
+                'Ice Cream', 'Juice', 'Soda', 'Coffee', 'Tea', 'Water', 'Beer', 'Wine', 'Pizza', 'Waffles'
+            ];
+
+            const container = document.getElementById('animation-container');
+            const MAX_ITEMS_ON_SCREEN = 100;
+            const ITEMS_STARTING_ON_SCREEN = 40;
+            let groceryIndex = 0;
+
+            function getRandom(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+            
+            function getNextGroceryItem() {
+                const item = groceryList[groceryIndex];
+                groceryIndex = (groceryIndex + 1) % groceryList.length;
+                return item;
+            }
+
+            function resetItem(item, startsOnScreen, delay = '0s') {
+                item.style.left = `${getRandom(0, 95)}vw`;
+                item.style.fontSize = `${getRandom(16, 40)}px`;
+                const finalOpacity = getRandom(0.15, 0.55);
+                item.style.setProperty('--final-opacity', finalOpacity);
+                if (!startsOnScreen) {
+                    item.textContent = getNextGroceryItem();
+                }
+                const startY = startsOnScreen ? `${getRandom(0, 80)}vh` : '-100px';
+                item.style.setProperty('--start-y', startY);
+                const animationDuration = `${getRandom(15, 40)}s`;
+                item.style.animation = 'none';
+                void item.offsetWidth; 
+                item.style.animation = `fallAndFade ${animationDuration} linear ${delay} infinite backwards`;
+            }
+            
+            groceryList.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < MAX_ITEMS_ON_SCREEN; i++) {
+                const item = document.createElement('span');
+                item.className = 'grocery-item';
+                item.textContent = getNextGroceryItem();
+                container.appendChild(item);
+                item.addEventListener('click', function() {
+                    addItemBubble(this.textContent);
+                    this.style.display = 'none'; // Hide the item
+                    setTimeout(() => {
+                        this.style.display = '';
+                        resetItem(this, false, '0s');
+                    }, 2000);
+                });
+
+                if (i < ITEMS_STARTING_ON_SCREEN) {
+                    resetItem(item, true, '0s');
+                } else {
+                    const initialDelay = `${getRandom(0, 20)}s`;
+                    resetItem(item, false, initialDelay);
+                }
+
+                item.addEventListener('animationiteration', () => {
+                    resetItem(item, false, '0s');
+                });
+            }
+
+            const groceryInput = document.getElementById('grocery-input');
+            const addedItemsContainer = document.getElementById('added-items');
+
+            groceryInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter' && this.value.trim() !== '') {
+                    addItemBubble(this.value.trim());
+                    this.value = '';
+                }
+            });
+
+            function addItemBubble(itemText) {
+                const bubble = document.createElement('div');
+                bubble.className = 'added-item-bubble';
+                bubble.textContent = itemText;
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevents the bubble click from firing
+                    bubble.style.animation = 'fadeOut 0.3s forwards';
+                    bubble.addEventListener('animationend', () => bubble.remove());
+                });
+                bubble.appendChild(removeBtn);
+                bubble.addEventListener('click', function() {
+                    // Deselect other bubbles for a cleaner UI
+                    document.querySelectorAll('.added-item-bubble.selected').forEach(selectedBubble => {
+                        if (selectedBubble !== this) {
+                            selectedBubble.classList.remove('selected');
+                        }
+                    });
+                    this.classList.toggle('selected');
+                });
+
+                addedItemsContainer.appendChild(bubble);
+            }
+
+
+            // --- NEW DATA LOADING AND SEARCH LOGIC ---
+
+            const finalizeBtn = document.getElementById('finalize-btn');
+            const resultsContainer = document.getElementById('results-container');
+            const stores = ["foodbasics", "nofrills", "freshco", "metro", "foodland", "gianttiger"];
+            let allStoreData = [];
+
+            // 1. Function to load all grocery data from the JSON files
+            async function loadGroceryData() {
+                const fetchPromises = stores.map(store => fetch(`./data/${store}.json`).then(res => res.json()));
+                try {
+                    const allData = await Promise.all(fetchPromises);
+                    allStoreData = [].concat(...allData); // Flatten the array of arrays into one big array
+                    console.log(`Loaded ${allStoreData.length} items from all stores.`);
+                    finalizeBtn.disabled = false;
+                    finalizeBtn.textContent = 'Optimize My List';
+                } catch (error) {
+                    console.error("Failed to load grocery data:", error);
+                    alert("Could not load grocery data. Please check the console for errors.");
+                }
+            }
+            
+            // Disable button until data is loaded
+            finalizeBtn.disabled = true;
+            finalizeBtn.textContent = 'Loading Data...';
+            loadGroceryData(); // Load the data as soon as the page loads
+
+
+            // 2. Add the click event listener to the "Optimize" button
+            finalizeBtn.addEventListener('click', function() {
+                const itemsToSearch = [];
+                document.querySelectorAll('.added-item-bubble').forEach(bubble => {
+                    // Extract text content, removing the '×' button's text if present
+                    itemsToSearch.push(bubble.childNodes[0].nodeValue.trim());
+                });
+
+                if (itemsToSearch.length === 0) {
+                    alert('Please add some items to your list first!');
+                    return;
+                }
+
+                // Perform the search
+                const searchResults = findItems(itemsToSearch);
+                displayResults(searchResults);
+            });
+
+            // 3. The function that performs the search
+            function findItems(searchTerms) {
+                const results = {};
+                searchTerms.forEach(term => {
+                    const searchTerm = term.toLowerCase();
+                    results[term] = allStoreData.filter(item => 
+                        item.name && item.name.toLowerCase().includes(searchTerm)
+                    );
+                });
+                return results;
+            }
+
+            // 4. The function that displays the results on the page
+            function displayResults(results) {
+                resultsContainer.innerHTML = ''; // Clear previous results
+
+                for (const searchTerm in results) {
+                    const items = results[searchTerm];
+                    const groupEl = document.createElement('div');
+                    groupEl.className = 'result-group';
+                    
+                    let innerHTML = `<h3>Results for "${searchTerm}"</h3>`;
+
+                    if (items.length === 0) {
+                        innerHTML += '<p>No items found.</p>';
+                    } else {
+                        items.forEach(item => {
+                            const imagePath = `./data/${item.flyer_id}_images/${item.id}.jpg`;
+                            innerHTML += `
+                                <div class="result-item">
+                                    <img src="${imagePath}" alt="${item.name}">
+                                    <div class="item-details">
+                                        <p class="item-name">${item.name}</p>
+                                        <p class="item-price">$${item.price}</p>
+                                        <p class="item-store">Found at: ${item.flyer_id}</p>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    groupEl.innerHTML = innerHTML;
+                    resultsContainer.appendChild(groupEl);
+                }
+                 // Scroll to the results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>
