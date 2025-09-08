@@ -10,6 +10,10 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
 
+    # Add this block to grant write permissions
+    permissions:
+      contents: write
+
     steps:
       - name: Check out this repository
         uses: actions/checkout@v3
