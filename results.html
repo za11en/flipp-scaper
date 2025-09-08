@@ -1,14 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- [HEAD and STYLE sections remain the same] -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="view-transition" content="same-origin" />
     <title>Your Optimized Results</title>
     <style>
-        /* Your existing CSS here */
-        :root{--dark-green:#006400;--light-green:#90ee90;--card-background:rgba(255, 255, 255, 0.9);--shadow:0 8px 32px 0 rgba(31, 38, 135, 0.2)}body{font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;margin:0;background:linear-gradient(to bottom, var(--light-green), var(--dark-green));min-height:100vh;color:#333}header{padding:20px;background:rgba(0,0,0,0.1);text-align:center}header h1{color:white;text-shadow:1px 1px 2px rgba(0,0,0,0.3);margin:0}header a{color:white;text-decoration:none;font-weight:bold;display:inline-block;margin-top:10px;padding:8px 15px;border:1px solid white;border-radius:20px;transition:background 0.3s, color 0.3s}header a:hover{background:white;color:var(--dark-green)}#results-gallery{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:20px;padding:20px}.gallery-item{background:var(--card-background);border-radius:15px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:transform 0.3s ease, box-shadow 0.3s ease;opacity:0;animation:fadeIn 0.5s ease forwards}.gallery-item:hover{transform:translateY(-5px);box-shadow:0 12px 40px 0 rgba(31, 38, 135, 0.3)}@keyframes fadeIn{to{opacity:1}}.gallery-item img{width:100%;height:150px;object-fit:contain;background-color:white;display:block}.gallery-item-details{padding:15px;text-align:center}.gallery-item-details p{margin:0;line-height:1.3}.item-name{font-weight:600;font-size:1em;height:50px}.item-price{font-size:1.4em;font-weight:bold;color:var(--dark-green);margin-top:5px}.item-store{font-size:0.8em;color:#666;text-transform:capitalize;margin-top:5px}#modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.8);backdrop-filter:blur(5px);display:flex;justify-content:center;align-items:center;opacity:0;visibility:hidden;transition:opacity 0.3s, visibility 0.3s}#modal-overlay.active{opacity:1;visibility:visible}#modal-overlay img{max-width:90vw;max-height:80vh;border-radius:10px;box-shadow:0 10px 50px rgba(0,0,0,0.5)}#loader{color:white;font-size:2em;text-align:center;padding-top:20vh}@keyframes fade-in{from{opacity:0}}@keyframes fade-out{to{opacity:0}}@keyframes slide-from-right{from{transform:translateX(50px)}}@keyframes slide-to-left{to{transform:translateX(-50px)}}::view-transition-old(root){animation:300ms ease-out both fade-out, 300ms ease-out both slide-to-left}::view-transition-new(root){animation:300ms ease-out both fade-in, 300ms ease-out both slide-from-right}.gallery-item img{view-transition-name:none}.gallery-item.selected img{view-transition-name:selected-image}#modal-overlay img{view-transition-name:selected-image}
+        :root {
+            --dark-green: #006400;
+            --light-green: #90ee90;
+            --card-background: rgba(255, 255, 255, 0.9);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        }
+
+        /* [Other CSS remains the same] */
+        body{font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;margin:0;background:linear-gradient(to bottom, var(--light-green), var(--dark-green));min-height:100vh;color:#333}header{padding:20px;background:rgba(0,0,0,0.1);text-align:center}header h1{color:white;text-shadow:1px 1px 2px rgba(0,0,0,0.3);margin:0}header a{color:white;text-decoration:none;font-weight:bold;display:inline-block;margin-top:10px;padding:8px 15px;border:1px solid white;border-radius:20px;transition:background 0.3s, color 0.3s}header a:hover{background:white;color:var(--dark-green)}#results-gallery{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:20px;padding:20px}.gallery-item{background:var(--card-background);border-radius:15px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:transform 0.3s ease, box-shadow 0.3s ease;opacity:0;animation:fadeIn 0.5s ease forwards}.gallery-item:hover{transform:translateY(-5px);box-shadow:0 12px 40px 0 rgba(31, 38, 135, 0.3)}@keyframes fadeIn{to{opacity:1}}.gallery-item img{width:100%;height:150px;object-fit:contain;background-color:white;display:block}.gallery-item-details{padding:15px;text-align:center}.gallery-item-details p{margin:0;line-height:1.3}
+
+        /* --- CSS CHANGE IS HERE --- */
+        .item-name {
+            font-weight: 600;
+            font-size: 1em;
+            line-height: 1.3em; /* Set line height */
+            height: 2.6em;      /* Set height for exactly two lines (2 * 1.3em) */
+            
+            /* The magic for truncating text */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Limit to 2 lines */
+            -webkit-box-orient: vertical;
+        }
+
+        .item-price{font-size:1.4em;font-weight:bold;color:var(--dark-green);margin-top:5px}.item-store{font-size:0.8em;color:#666;text-transform:capitalize;margin-top:5px}#modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.8);backdrop-filter:blur(5px);display:flex;justify-content:center;align-items:center;opacity:0;visibility:hidden;transition:opacity 0.3s, visibility 0.3s}#modal-overlay.active{opacity:1;visibility:visible}#modal-overlay img{max-width:90vw;max-height:80vh;border-radius:10px;box-shadow:0 10px 50px rgba(0,0,0,0.5)}#loader{color:white;font-size:2em;text-align:center;padding-top:20vh}@keyframes fade-in{from{opacity:0}}@keyframes fade-out{to{opacity:0}}@keyframes slide-from-right{from{transform:translateX(50px)}}@keyframes slide-to-left{to{transform:translateX(-50px)}}::view-transition-old(root){animation:300ms ease-out both fade-out, 300ms ease-out both slide-to-left}::view-transition-new(root){animation:300ms ease-out both fade-in, 300ms ease-out both slide-from-right}.gallery-item img{view-transition-name:none}.gallery-item.selected img{view-transition-name:selected-image}#modal-overlay img{view-transition-name:selected-image}
+
     </style>
 </head>
 <body>
@@ -26,12 +50,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // --- THIS IS THE KEY ---
-            // Determine the correct base path for all file requests.
             const repoName = window.location.pathname.split('/')[1];
             const basePath = window.location.hostname.includes('github.io') ? `/${repoName}/` : '/';
 
-            // Update the "back" link to use the correct path
             document.getElementById('back-link').href = `${basePath}index.html`;
 
             const gallery = document.getElementById('results-gallery');
@@ -52,7 +73,6 @@
 
             async function loadGroceryData() {
                 try {
-                    // Use the basePath for fetching JSON files
                     const fetchPromises = stores.map(store => fetch(`${basePath}data/${store}.json`).then(res => res.json()));
                     const allData = await Promise.all(fetchPromises);
                     allStoreData = [].concat(...allData);
@@ -87,7 +107,6 @@
                     itemEl.className = 'gallery-item';
                     itemEl.style.animationDelay = `${index * 50}ms`;
 
-                    // Use the basePath for constructing the image path
                     const imagePath = `${basePath}data/${item.flyer_id}_images/${item.id}.jpg`;
                     
                     itemEl.innerHTML = `
@@ -98,6 +117,11 @@
                             <p class="item-store">${item.flyer_id}</p>
                         </div>
                     `;
+
+                    // --- JAVASCRIPT CHANGE IS HERE ---
+                    // Add the full item name to the title attribute for a tooltip on hover
+                    itemEl.querySelector('.item-name').title = item.name;
+
                     itemEl.addEventListener('click', () => openModal(itemEl, imagePath));
                     gallery.appendChild(itemEl);
                 });
