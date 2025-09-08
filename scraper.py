@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import shutil
 
 # List of stores and their corresponding API URLs
 stores = {
@@ -25,31 +26,54 @@ keys_to_remove = {
 # Loop through each store
 for store_name, url in stores.items():
     try:
-        # Send a GET request to the API
+        # --- 1. Fetch and Process JSON Data ---
+        print(f"Fetching data for {store_name}...")
         response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for bad status codes
-
-        # Get the JSON data from the response
+        response.raise_for_status()
         data = response.json()
 
         # Process each item in the data list
         for item in data:
-            # Remove the unwanted keys
             for key in keys_to_remove:
-                # Use .pop() with a default value of None to avoid errors if a key doesn't exist
                 item.pop(key, None)
-
-            # Replace the flyer_id with the store name
             item['flyer_id'] = store_name
 
-        # Define the output file path
-        file_path = os.path.join('data', f'{store_name}.json')
-
-        # Save the modified data to a JSON file
-        with open(file_path, 'w') as f:
+        # --- 2. Save the Processed JSON File ---
+        json_file_path = os.path.join('data', f'{store_name}.json')
+        with open(json_file_path, 'w') as f:
             json.dump(data, f, indent=4)
+        print(f"Successfully saved JSON for {store_name}")
 
-        print(f"Successfully scraped and processed data for {store_name}")
+        # --- 3. Download Images ---
+        # Create a dedicated folder for the store's images
+        image_dir = os.path.join('data', f'{store_name}_images')
+        if not os.path.exists(image_dir):
+            os.makedirs(image_dir)
+
+        print(f"Downloading images for {store_name}...")
+        for item in data:
+            image_url = item.get("cutout_image_url")
+            item_id = item.get("id")
+
+            # Proceed only if the URL and ID exist
+            if image_url and item_id:
+                try:
+                    # Define the image filename using the item's ID
+                    image_filename = f"{item_id}.jpg"
+                    image_path = os.path.join(image_dir, image_filename)
+
+                    # Stream the download to handle images efficiently
+                    img_response = requests.get(image_url, stream=True)
+                    img_response.raise_for_status()
+
+                    # Save the image to the file
+                    with open(image_path, 'wb') as img_file:
+                        shutil.copyfileobj(img_response.raw, img_file)
+
+                except requests.exceptions.RequestException as e:
+                    print(f"  - Could not download image for item {item_id}: {e}")
+
+        print(f"Finished downloading images for {store_name}\n")
 
     except requests.exceptions.RequestException as e:
-        print(f"Error scraping {store_name}: {e}")
+        print(f"Error scraping {store_name}: {e}\n")
