@@ -14,17 +14,18 @@
         .container-text { color: white; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
         .search-container { position: relative; width: 100%; }
         .search-input { width: 100%; padding: 15px 20px; font-size: 18px; border: none; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); outline: none; box-sizing: border-box; }
-        .added-items-container { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-height: 110px; overflow-y: auto; padding-top: 5px; padding-bottom: 5px; }
+        .added-items-container { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-height: 110px; overflow-y: auto; padding-top: 5px; padding-bottom: 5px; min-height: 20px;}
         .added-item-bubble { background-color: rgba(100, 100, 255, 1); color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); animation: popIn 0.3s ease; position: relative; cursor: pointer; margin-top: 5px; }
         .remove-btn { position: absolute; top: -10px; right: -5px; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; line-height: 20px; text-align: center; cursor: pointer; opacity: 0; visibility: hidden; transform: scale(0.5); transition: opacity 0.2s, visibility 0.2s, transform 0.2s; }
         .added-item-bubble:hover .remove-btn, .added-item-bubble.selected .remove-btn { opacity: 1; visibility: visible; transform: scale(1); }
         .finalize-button { background-color: #FF9200; color: white; border: none; border-radius: 25px; padding: 12px 25px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: background-color 0.3s, transform 0.2s; }
         .finalize-button:hover { background-color: #218838; transform: translateY(-2px); }
-        .store-selector-container { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        .store-checkbox { background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 15px; display: flex; align-items: center; }
-        .store-checkbox label { color: white; font-size: 14px; text-transform: capitalize; cursor: pointer; margin-left: 5px; }
+        .store-selector-container { margin-top: 15px; text-align: center; }
+        #stores-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 5px; }
+        .store-checkbox { background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 15px; display: inline-flex; align-items: center; cursor: pointer; transition: background-color 0.2s; }
+        .store-checkbox:hover { background: rgba(255, 255, 255, 0.4); }
+        .store-checkbox label { color: white; font-size: 12px; text-transform: capitalize; cursor: pointer; margin-left: 5px; -webkit-user-select: none; user-select: none; }
         .store-checkbox input { cursor: pointer; }
-        .store-selector-container .container-text { width: 100%; margin-bottom: 5px; }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.5); } }
     </style>
@@ -40,8 +41,9 @@
             <input type="search" id="grocery-input" class="search-input" placeholder="e.g., Apples, Milk, Bread...">
         </div>
         <div id="added-items" class="added-items-container"></div>
-        <div id="store-selector-container">
-             <p class="container-text" style="margin-bottom: 10px;">Select stores to search:</p>
+        <div class="store-selector-container">
+             <p class="container-text" style="margin-bottom: 10px; font-size: 16px;">Select stores to search:</p>
+             <div id="stores-grid"></div>
         </div>
         <button id="finalize-btn" class="finalize-button">Optimize My List</button>
     </div>
@@ -59,17 +61,17 @@
         function addItemBubble(t){const e=document.createElement('div');e.className='added-item-bubble',e.textContent=t;const o=document.createElement('button');o.className='remove-btn',o.innerHTML='&times;',o.addEventListener('click',function(t){t.stopPropagation(),e.style.animation='fadeOut 0.3s forwards',e.addEventListener('animationend',()=>e.remove())}),e.appendChild(o),e.addEventListener('click',function(){document.querySelectorAll('.added-item-bubble.selected').forEach(t=>{t!==this&&t.classList.remove('selected')}),this.classList.toggle('selected')}),addedItemsContainer.appendChild(e)}groceryInput.addEventListener('keypress',function(t){'Enter'===t.key&&''!==this.value.trim()&&(addItemBubble(this.value.trim()),this.value='')});
         
         const stores = ["foodbasics", "nofrills", "freshco", "metro", "foodland", "gianttiger", "walmart", "loblaws"];
-        const storeSelectorContainer = document.getElementById('store-selector-container');
+        const storesGrid = document.getElementById('stores-grid');
         const checkboxesHtml = stores.map(store => `
-            <div class="store-checkbox">
+            <div class="store-checkbox" onclick="document.getElementById('${store}').click()">
                 <input type="checkbox" id="${store}" name="store" value="${store}" checked>
                 <label for="${store}">${store}</label>
             </div>
         `).join('');
-        storeSelectorContainer.insertAdjacentHTML('beforeend', checkboxesHtml);
+        storesGrid.innerHTML = checkboxesHtml;
 
         const finalizeBtn = document.getElementById('finalize-btn');
-        const repoName = window.location.pathname.split('/')[1];
+        const repoName = window.location.pathname.split('/[1]/');
         const basePath = window.location.hostname.includes('github.io') ? `/${repoName}/` : '/';
         finalizeBtn.addEventListener('click', function() {
             const itemsToSearch = [];
@@ -83,7 +85,7 @@
             }
 
             const selectedStores = [];
-            document.querySelectorAll('#store-selector-container input[type="checkbox"]:checked').forEach(checkbox => {
+            document.querySelectorAll('#stores-grid input[type="checkbox"]:checked').forEach(checkbox => {
                 selectedStores.push(checkbox.value);
             });
 
