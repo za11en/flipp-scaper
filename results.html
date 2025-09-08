@@ -39,65 +39,89 @@
         <img id="modal-image" src="" alt="Full-size grocery item">
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const repoName = window.location.pathname.split('/')[1];
-            const basePath = window.location.hostname.includes('github.io') ? `/${repoName}/` : '/';
+  <script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const repoName = window.location.pathname.split('/')[1];
+    const basePath = window.location.hostname.includes('github.io') ? `/${repoName}/` : '/';
 
-            document.getElementById('back-link').href = `${basePath}index.html`;
+    document.getElementById('back-link').href = `${basePath}index.html`;
 
-            const gallery = document.getElementById('results-gallery');
-            const loader = document.getElementById('loader');
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modalImage = document.getElementById('modal-image');
-            const stores = ["foodbasics", "nofrills", "freshco", "metro", "foodland", "gianttiger", "walmart", "loblaws"];
-            let allStoreData = [];
-            const params = new URLSearchParams(window.location.search);
-            const query = params.get('q');
-            const searchTerms = query ? query.split(',') : [];
+    const gallery = document.getElementById('results-gallery');
+    const loader = document.getElementById('loader');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalImage = document.getElementById('modal-image');
+    const stores = ["foodbasics", "nofrills", "freshco", "metro", "foodland", "gianttiger", "walmart", "loblaws"];
+    let allStoreData = [];
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q');
+    const searchTerms = query ? query.split(',') : [];
 
-            if (searchTerms.length === 0) {
-                loader.textContent = "No items to search. Please start a new search.";
-                return;
-            }
+    if (searchTerms.length === 0) {
+        loader.textContent = "No items to search. Please start a new search.";
+        return;
+    }
 
-            async function loadGroceryData() {
-                try {
-                    const fetchPromises = stores.map(store => fetch(`${basePath}data/${store}.json`).then(res => res.json()));
-                    const allData = await Promise.all(fetchPromises);
-                    allStoreData = [].concat(...allData);
-                } catch (error) {
-                    loader.textContent = "Error: Could not load grocery data. Check console for details.";
-                    console.error("Failed to fetch:", error);
-                }
-            }
+    async function loadGroceryData() {
+        try {
+            const fetchPromises = stores.map(store => fetch(`${basePath}data/${store}.json`).then(res => res.json()));
+            const allData = await Promise.all(fetchPromises);
+            allStoreData = [].concat(...allData);
+        } catch (error) {
+            loader.textContent = "Error: Could not load grocery data. Check console for details.";
+            console.error("Failed to fetch:", error);
+        }
+    }
 
-            function findItems(terms) {
-                const allResults = [];
-                terms.forEach(term => {
-                    const searchTerm = term.toLowerCase().trim();
-                    const foundItems = allStoreData.filter(item =>
-                        item.name && item.name.toLowerCase().includes(searchTerm)
-                    );
-                    allResults.push(...foundItems);
-                });
-                return allResults.filter((item, index, self) =>
-                    index === self.findIndex((t) => (t.id === item.id))
-                );
-            }
+    // Group results by search term
+    function findItemsByTerm(terms) {
+        return terms.map(term => {
+            const searchTerm = term.toLowerCase().trim();
+            const foundItems = allStoreData.filter(item =>
+                item.name && item.name.toLowerCase().includes(searchTerm)
+            );
+            // Remove duplicates per term
+            const uniqueItems = foundItems.filter((item, idx, arr) =>
+                idx === arr.findIndex(t => t.id === item.id)
+            );
+            return { term, items: uniqueItems };
+        });
+    }
 
-            function displayGallery(items) {
-                loader.style.display = 'none';
-                if (items.length === 0) {
-                    gallery.innerHTML = '<p style="color:white; text-align:center; width:100%;">No results found.</p>';
-                    return;
-                }
-                items.forEach((item, index) => {
+    // Render grouped results
+    function displayGalleryByTerm(groups) {
+        loader.style.display = 'none';
+        gallery.innerHTML = ''; // Clear previous
+
+        let resultsFound = false;
+
+        groups.forEach(group => {
+            // Section header
+            const section = document.createElement('section');
+            section.className = 'results-section';
+            const header = document.createElement('h2');
+            header.textContent = `Results for: ${group.term}`;
+            header.style.color = "var(--dark-green)";
+            header.style.margin = "1em 0 0.5em 0";
+            section.appendChild(header);
+
+            // Results grid
+            if (group.items.length === 0) {
+                const p = document.createElement('p');
+                p.textContent = 'No results found.';
+                p.style.color = 'white';
+                section.appendChild(p);
+            } else {
+                resultsFound = true;
+                const grid = document.createElement('div');
+                grid.className = 'gallery-row';
+                grid.style.display = 'flex';
+                grid.style.flexWrap = 'wrap';
+                group.items.forEach((item, index) => {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'gallery-item';
                     itemEl.style.animationDelay = `${index * 50}ms`;
                     const imagePath = `${basePath}data/${item.flyer_id}_images/${item.id}.jpg`;
-                    
+
                     itemEl.innerHTML = `
                         <img src="${imagePath}" alt="${item.name}" loading="lazy">
                         <div class="gallery-item-details">
@@ -109,36 +133,46 @@
 
                     itemEl.querySelector('.item-name').title = item.name;
                     itemEl.addEventListener('click', () => openModal(itemEl, imagePath));
-                    gallery.appendChild(itemEl);
+                    grid.appendChild(itemEl);
                 });
+                section.appendChild(grid);
             }
-            function openModal(itemElement, imageUrl) {
-                const imgElement = itemElement.querySelector('img');
-                imgElement.classList.add('selected');
-                modalImage.src = imageUrl;
-                if (!document.startViewTransition) {
-                    modalOverlay.classList.add('active');
-                    return;
-                }
-                const transition = document.startViewTransition(() => {
-                    modalOverlay.classList.add('active');
-                });
-                transition.finished.finally(() => imgElement.classList.remove('selected'));
-            }
-            function closeModal() {
-                if (!document.startViewTransition) {
-                    modalOverlay.classList.remove('active');
-                    return;
-                }
-                const transition = document.startViewTransition(() => {
-                    modalOverlay.classList.remove('active');
-                });
-            }
-            modalOverlay.addEventListener('click', closeModal);
-            await loadGroceryData();
-            const results = findItems(searchTerms);
-            displayGallery(results);
+            gallery.appendChild(section);
         });
-    </script>
+
+        if (!resultsFound) {
+            gallery.innerHTML = '<p style="color:white; text-align:center; width:100%;">No results found.</p>';
+        }
+    }
+
+    function openModal(itemElement, imageUrl) {
+        const imgElement = itemElement.querySelector('img');
+        imgElement.classList.add('selected');
+        modalImage.src = imageUrl;
+        if (!document.startViewTransition) {
+            modalOverlay.classList.add('active');
+            return;
+        }
+        const transition = document.startViewTransition(() => {
+            modalOverlay.classList.add('active');
+        });
+        transition.finished.finally(() => imgElement.classList.remove('selected'));
+    }
+    function closeModal() {
+        if (!document.startViewTransition) {
+            modalOverlay.classList.remove('active');
+            return;
+        }
+        const transition = document.startViewTransition(() => {
+            modalOverlay.classList.remove('active');
+        });
+    }
+    modalOverlay.addEventListener('click', closeModal);
+
+    await loadGroceryData();
+    const resultsByTerm = findItemsByTerm(searchTerms);
+    displayGalleryByTerm(resultsByTerm);
+});
+</script>
 </body>
 </html>
