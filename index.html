@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- [HEAD and STYLE sections remain the same] -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="view-transition" content="same-origin" />
     <title>Grocery List Optimizer</title>
     <style>
-        /* Your existing CSS here */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: linear-gradient(to bottom, #90ee90, #006400); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         .animation-container { position: relative; width: 100%; height: 100%; }
         .grocery-item { position: absolute; color: white; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); will-change: transform, opacity; cursor: pointer; }
@@ -27,7 +25,6 @@
     </style>
 </head>
 <body>
-    <!-- [BODY HTML remains the same] -->
     <div id="animation-container" class="animation-container"></div>
     <div class="floating-container">
         <div class="container-text">
@@ -43,16 +40,10 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // [Animation script remains the same]
         const groceryList=['Apples','Avocado','Bananas','Blueberries','Oranges','Strawberries','Grapes','Watermelon','Peaches','Cherries','Broccoli','Carrots','Cucumber','Garlic','Onions','Peppers','Potatoes','Spinach','Tomatoes','Lettuce','Mushrooms','Celery','Sweet Potatoes','Corn','Zucchini','Asparagus','Cabbage','Cauliflower','Eggplant','Kale','Beef','Chicken','Bacon','Fish','Sausage','Pork','Turkey','Shrimp','Lamb','Crab','Milk','Cheese','Eggs','Butter','Yogurt','Cream Cheese','Sour Cream','Cottage Cheese','Heavy Cream','Half & Half','Bread','Rice','Pasta','Cereal','Oats','Flour','Bagels','Tortillas','Quinoa','Pita Bread','Beans','Lentils','Nuts','Peanut Butter','Almonds','Walnuts','Cashews','Hummus','Tofu','Edamame','Soup','Crackers','Chips','Popcorn','Honey','Sugar','Jam','Pretzels','Granola Bars','Chocolate','Olive Oil','Ketchup','Mustard','Mayonnaise','Salsa','Soy Sauce','Vinegar','Hot Sauce','Spices','Herbs','Ice Cream','Juice','Soda','Coffee','Tea','Water','Beer','Wine','Pizza','Waffles'];const container=document.getElementById('animation-container');const MAX_ITEMS_ON_SCREEN=100;const ITEMS_STARTING_ON_SCREEN=40;let groceryIndex=0;function getRandom(t,e){return Math.random()*(e-t)+t}function getNextGroceryItem(){const t=groceryList[groceryIndex];return groceryIndex=(groceryIndex+1)%groceryList.length,t}function resetItem(t,e,o='0s'){t.style.left=`${getRandom(0,95)}vw`,t.style.fontSize=`${getRandom(16,40)}px`;const n=getRandom(.15,.55);t.style.setProperty('--final-opacity',n),e||(t.textContent=getNextGroceryItem());const a=e?`${getRandom(0,80)}vh`:'-100px';t.style.setProperty('--start-y',a);const r=`${getRandom(15,40)}s`;t.style.animation='none',t.offsetWidth,t.style.animation=`fallAndFade ${r} linear ${o} infinite backwards`}groceryList.sort(()=>.5-Math.random());for(let t=0;t<MAX_ITEMS_ON_SCREEN;t++){const e=document.createElement('span');e.className='grocery-item',e.textContent=getNextGroceryItem(),container.appendChild(e),e.addEventListener('click',function(){addItemBubble(this.textContent),this.style.display='none',setTimeout(()=>{this.style.display='',resetItem(this,!1,'0s')},2e3)}),t<ITEMS_STARTING_ON_SCREEN?resetItem(e,!0,'0s'):resetItem(e,!1,`${getRandom(0,20)}s`),e.addEventListener('animationiteration',()=>{resetItem(e,!1,'0s')})}const groceryInput=document.getElementById('grocery-input'),addedItemsContainer=document.getElementById('added-items');function addItemBubble(t){const e=document.createElement('div');e.className='added-item-bubble',e.textContent=t;const o=document.createElement('button');o.className='remove-btn',o.innerHTML='&times;',o.addEventListener('click',function(t){t.stopPropagation(),e.style.animation='fadeOut 0.3s forwards',e.addEventListener('animationend',()=>e.remove())}),e.appendChild(o),e.addEventListener('click',function(){document.querySelectorAll('.added-item-bubble.selected').forEach(t=>{t!==this&&t.classList.remove('selected')}),this.classList.toggle('selected')}),addedItemsContainer.appendChild(e)}groceryInput.addEventListener('keypress',function(t){'Enter'===t.key&&''!==this.value.trim()&&(addItemBubble(this.value.trim()),this.value='')});
-
-        // --- UPDATED SCRIPT FOR NAVIGATION ---
         const finalizeBtn = document.getElementById('finalize-btn');
-        
-        // This line determines the correct base path
         const repoName = window.location.pathname.split('/')[1];
         const basePath = window.location.hostname.includes('github.io') ? `/${repoName}/` : '/';
-
         finalizeBtn.addEventListener('click', function() {
             const itemsToSearch = [];
             document.querySelectorAll('.added-item-bubble').forEach(bubble => {
@@ -63,10 +54,7 @@
                 alert('Please add some items to your list first!');
                 return;
             }
-
             const query = encodeURIComponent(itemsToSearch.join(','));
-            
-            // Use the basePath to construct the correct URL
             const resultsUrl = `${basePath}results.html?q=${query}`;
             
             window.location.href = resultsUrl;
