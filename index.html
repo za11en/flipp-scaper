@@ -22,10 +22,11 @@
         .finalize-button:hover { background-color: #218838; transform: translateY(-2px); }
         .store-selector-container { margin-top: 15px; text-align: center; }
         #stores-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 5px; }
-        .store-checkbox { background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 15px; display: inline-flex; align-items: center; cursor: pointer; transition: background-color 0.2s; }
-        .store-checkbox:hover { background: rgba(255, 255, 255, 0.4); }
-        .store-checkbox label { color: white; font-size: 12px; text-transform: capitalize; cursor: pointer; margin-left: 5px; -webkit-user-select: none; user-select: none; }
-        .store-checkbox input { cursor: pointer; }
+        .store-label { display: inline-flex; align-items: center; background-color: rgba(255, 255, 255, 0.2); color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px; text-transform: capitalize; cursor: pointer; transition: background-color 0.3s; user-select: none; }
+        .store-label:hover { background-color: rgba(255, 255, 255, 0.4); }
+        .store-label input[type="checkbox"] { display: none; }
+        .store-label.checked { background-color: #28a745; }
+        .store-label.checked:hover { background-color: #218838; }
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.5); } }
     </style>
@@ -62,16 +63,32 @@
         
         const stores = ["foodbasics", "nofrills", "freshco", "metro", "foodland", "gianttiger", "walmart", "loblaws"];
         const storesGrid = document.getElementById('stores-grid');
-        const checkboxesHtml = stores.map(store => `
-            <div class="store-checkbox" onclick="document.getElementById('${store}').click()">
-                <input type="checkbox" id="${store}" name="store" value="${store}" checked>
-                <label for="${store}">${store}</label>
-            </div>
-        `).join('');
-        storesGrid.innerHTML = checkboxesHtml;
+        stores.forEach(store => {
+            const label = document.createElement('label');
+            label.className = 'store-label checked';
+            label.setAttribute('for', store);
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = store;
+            checkbox.name = 'store';
+            checkbox.value = store;
+            checkbox.checked = true;
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = store;
+            
+            checkbox.addEventListener('change', () => {
+                label.classList.toggle('checked', checkbox.checked);
+            });
+            
+            label.appendChild(checkbox);
+            label.appendChild(textSpan);
+            storesGrid.appendChild(label);
+        });
 
         const finalizeBtn = document.getElementById('finalize-btn');
-        const repoName = window.location.pathname.split('/[1]/');
+        const repoName = window.location.pathname.split('/')[1];
         const basePath = window.location.hostname.includes('github.io') ? `/${repoName}/` : '/';
         finalizeBtn.addEventListener('click', function() {
             const itemsToSearch = [];
