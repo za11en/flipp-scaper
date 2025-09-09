@@ -23,6 +23,9 @@ keys_to_remove = {
     "left", "bottom", "right", "top"
 }
 
+# This dictionary will store the paths to the latest JSON files
+manifest = {}
+
 for store_name, url in stores.items():
     try:
         print(f"Fetching data for {store_name}...")
@@ -34,29 +37,28 @@ for store_name, url in stores.items():
             print(f"No data found for {store_name}, skipping.\n")
             continue
 
-        # Extract the valid_from date from the first item (assuming all items in a flyer have the same date)
-        # The date is in ISO 8601 format, so we can slice the string to get 'YYYY-MM-DD'
         valid_from_date = data[0]['valid_from'][:10]
 
-        # Process JSON data
         for item in data:
             for key in keys_to_remove:
                 item.pop(key, None)
             item['flyer_id'] = store_name
 
-        # Create store-specific JSON directory
         store_json_dir = os.path.join('data', 'json', store_name)
         os.makedirs(store_json_dir, exist_ok=True)
 
-        # Define and save the JSON file
         json_filename = f'{store_name}-{valid_from_date}.json'
         json_file_path = os.path.join(store_json_dir, json_filename)
 
         with open(json_file_path, 'w') as f:
             json.dump(data, f, indent=4)
         print(f"Successfully saved JSON to {json_file_path}")
+        
+        # --- NEW: Add the path to the manifest ---
+        # We store the path relative to the 'data' directory for the frontend
+        manifest[store_name] = f"json/{store_name}/{json_filename}"
 
-        # Create store- and date-specific image directory
+
         image_dir = os.path.join('data', 'images', store_name, valid_from_date)
         os.makedirs(image_dir, exist_ok=True)
 
@@ -69,15 +71,10 @@ for store_name, url in stores.items():
                 try:
                     image_filename = f"{item_id}.jpg"
                     image_path = os.path.join(image_dir, image_filename)
-
-                    # Download the image
                     img_response = requests.get(image_url, stream=True)
                     img_response.raise_for_status()
-
-                    # Save the image to the file
                     with open(image_path, 'wb') as img_file:
                         shutil.copyfileobj(img_response.raw, img_file)
-
                 except requests.exceptions.RequestException as e:
                     print(f"  - Could not download image for item {item_id}: {e}")
 
@@ -85,3 +82,10 @@ for store_name, url in stores.items():
 
     except requests.exceptions.RequestException as e:
         print(f"Error scraping {store_name}: {e}\n")
+
+# --- NEW: Save the manifest file after the loop is done ---
+manifest_path = os.path.join('data', 'manifest.json')
+with open(manifest_path, 'w') as f:
+    json.dump(manifest, f, indent=4)
+
+print(f"Successfully created manifest file at {manifest_path}")

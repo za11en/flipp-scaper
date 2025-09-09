@@ -24,7 +24,7 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
         }
-        .item-price{font-size:1.4em;font-weight:bold;color:var(--dark-green);margin-top:5px}.item-store{font-size:0.8em;color:#666;text-transform:capitalize;margin-top:5px}#modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.8);backdrop-filter:blur(5px);display:flex;justify-content:center;align-items:center;opacity:0;visibility:hidden;transition:opacity 0.3s, visibility 0.3s}#modal-overlay.active{opacity:1;visibility:visible}#modal-overlay img{max-width:90vw;max-height:80vh;border-radius:10px;box-shadow:0 10px 50px rgba(0,0,0,0.5)}#loader{color:white;font-size:2em;text-align:center;padding-top:20vh}@keyframes fade-in{from{opacity:0}}@keyframes fade-out{to{opacity:0}}@keyframes slide-from-right{from{transform:translateX(50px)}}@keyframes slide-to-left{to{transform:translateX(-50px)}}::view-transition-old(root){animation:300ms ease-out both fade-out, 300ms ease-out both slide-to-left}::view-transition-new(root){animation:300ms ease-out both fade-in, 300ms ease-out both slide-from-right}.gallery-item img{view-transition-name:none}.gallery-item.selected img{view-transition-name:selected-image}#modal-overlay img{view-transition-name:selected-image}
+        .item-price{font-size:1.4em;font-weight:bold;color:var(--dark-green);margin-top:5px}.item-store{font-size:0.8em;color:#666;text-transform:capitalize;margin-top:5px}#modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0, 0, 0, 0.8);backdrop-filter:blur(5px);display:flex;justify-content:center;align:items-center;opacity:0;visibility:hidden;transition:opacity 0.3s, visibility 0.3s}#modal-overlay.active{opacity:1;visibility:visible}#modal-overlay img{max-width:90vw;max-height:80vh;border-radius:10px;box-shadow:0 10px 50px rgba(0,0,0,0.5)}#loader{color:white;font-size:2em;text-align:center;padding-top:20vh}@keyframes fade-in{from{opacity:0}}@keyframes fade-out{to{opacity:0}}@keyframes slide-from-right{from{transform:translateX(50px)}}@keyframes slide-to-left{to{transform:translateX(-50px)}}::view-transition-old(root){animation:300ms ease-out both fade-out, 300ms ease-out both slide-to-left}::view-transition-new(root){animation:300ms ease-out both fade-in, 300ms ease-out both slide-from-right}.gallery-item img{view-transition-name:none}.gallery-item.selected img{view-transition-name:selected-image}#modal-overlay img{view-transition-name:selected-image}
     </style>
 </head>
 <body>
@@ -63,16 +63,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // --- MODIFIED: This function now uses the manifest file ---
     async function loadGroceryData(stores) {
         try {
-            const fetchPromises = stores.map(store => 
-                fetch(`${basePath}data/${store}.json`).then(res => res.json())
-            );
+            // 1. Fetch the manifest to find out the latest file paths
+            const manifestResponse = await fetch(`${basePath}data/manifest.json`);
+            const manifest = await manifestResponse.json();
+
+            // 2. Create fetch promises for the stores we want, using paths from the manifest
+            const fetchPromises = stores
+                .filter(store => manifest[store]) // Only fetch if the store exists in the manifest
+                .map(store => {
+                    const jsonPath = `${basePath}data/${manifest[store]}`;
+                    return fetch(jsonPath).then(res => res.json());
+                });
+            
             const allData = await Promise.all(fetchPromises);
             allStoreData = [].concat(...allData);
+
         } catch (error) {
             loader.textContent = "Error: Could not load grocery data. Check console for details.";
-            console.error("Failed to fetch:", error);
+            console.error("Failed to fetch grocery data:", error);
         }
     }
 
@@ -88,7 +99,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return { term, items: uniqueItems };
         });
     }
-
+    
+    // --- MODIFIED: Image path logic is updated here ---
     function displayGalleryByTerm(groups) {
         loader.style.display = 'none';
         gallery.innerHTML = ''; 
@@ -123,7 +135,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'gallery-item';
                     itemEl.style.animationDelay = `${index * 50}ms`;
-                    const imagePath = `${basePath}data/${item.flyer_id}_images/${item.id}.jpg`;
+
+                    // --- NEW IMAGE PATH LOGIC ---
+                    // Get the date 'YYYY-MM-DD' from the item's 'valid_from' property
+                    const validDate = item.valid_from.substring(0, 10);
+                    const imagePath = `${basePath}data/images/${item.flyer_id}/${validDate}/${item.id}.jpg`;
 
                     itemEl.innerHTML = `
                         <img src="${imagePath}" alt="${item.name}" loading="lazy">
