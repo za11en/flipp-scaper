@@ -14,8 +14,9 @@ stores = {
     "loblaws": "https://dam.flippenterprise.net/api/flipp/flyers/7477242/flyer_items?locale=en"
 }
 
-if not os.path.exists('data'):
-    os.makedirs('data')
+# Create base directories if they don't exist
+os.makedirs('data/images', exist_ok=True)
+os.makedirs('data/json', exist_ok=True)
 
 keys_to_remove = {
     "video_url", "display_type", "available_to", "page_destination",
@@ -29,21 +30,37 @@ for store_name, url in stores.items():
         response.raise_for_status()
         data = response.json()
 
+        if not data:
+            print(f"No data found for {store_name}, skipping.\n")
+            continue
+
+        # Extract the valid_from date from the first item (assuming all items in a flyer have the same date)
+        # The date is in ISO 8601 format, so we can slice the string to get 'YYYY-MM-DD'
+        valid_from_date = data[0]['valid_from'][:10]
+
+        # Process JSON data
         for item in data:
             for key in keys_to_remove:
                 item.pop(key, None)
             item['flyer_id'] = store_name
 
-        json_file_path = os.path.join('data', f'{store_name}.json')
+        # Create store-specific JSON directory
+        store_json_dir = os.path.join('data', 'json', store_name)
+        os.makedirs(store_json_dir, exist_ok=True)
+
+        # Define and save the JSON file
+        json_filename = f'{store_name}-{valid_from_date}.json'
+        json_file_path = os.path.join(store_json_dir, json_filename)
+
         with open(json_file_path, 'w') as f:
             json.dump(data, f, indent=4)
-        print(f"Successfully saved JSON for {store_name}")
+        print(f"Successfully saved JSON to {json_file_path}")
 
-        image_dir = os.path.join('data', f'{store_name}_images')
-        if not os.path.exists(image_dir):
-            os.makedirs(image_dir)
+        # Create store- and date-specific image directory
+        image_dir = os.path.join('data', 'images', store_name, valid_from_date)
+        os.makedirs(image_dir, exist_ok=True)
 
-        print(f"Downloading images for {store_name}...")
+        print(f"Downloading images for {store_name} for week {valid_from_date}...")
         for item in data:
             image_url = item.get("cutout_image_url")
             item_id = item.get("id")
@@ -53,9 +70,11 @@ for store_name, url in stores.items():
                     image_filename = f"{item_id}.jpg"
                     image_path = os.path.join(image_dir, image_filename)
 
+                    # Download the image
                     img_response = requests.get(image_url, stream=True)
                     img_response.raise_for_status()
 
+                    # Save the image to the file
                     with open(image_path, 'wb') as img_file:
                         shutil.copyfileobj(img_response.raw, img_file)
 
