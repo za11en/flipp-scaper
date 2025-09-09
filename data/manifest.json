@@ -1,0 +1,10 @@
+{
+    "foodbasics": "json/foodbasics/foodbasics-2025-09-04.json",
+    "nofrills": "json/nofrills/nofrills-2025-09-03.json",
+    "freshco": "json/freshco/freshco-2025-08-28.json",
+    "metro": "json/metro/metro-2025-09-04.json",
+    "foodland": "json/foodland/foodland-2025-09-04.json",
+    "gianttiger": "json/gianttiger/gianttiger-2025-09-03.json",
+    "walmart": "json/walmart/walmart-2025-09-04.json",
+    "loblaws": "json/loblaws/loblaws-2025-09-04.json"
+}
